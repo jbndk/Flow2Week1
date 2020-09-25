@@ -84,11 +84,14 @@ public class PersonResourceTest {
         }
     }   
     
+    /*
     @Test
     public void testServerIsUp() {
         given().when().get("/person").then().statusCode(200);
     }
-           
+    */
+    
+    /*
     @Test
     public void getAllPersons(){
             List<PersonDTO> personDTOList;
@@ -106,6 +109,7 @@ public class PersonResourceTest {
             
             assertThat(personDTOList, contains(personDTO1, personDTO2, personDTO3));
     }
+    */
     
     @Test
     public void addPerson(){
