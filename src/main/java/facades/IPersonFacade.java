@@ -10,7 +10,7 @@ import dtos.PersonsDTO;
  */
 
 public interface IPersonFacade {
-  public PersonDTO addPerson(String fName, String lName, String phone);  
+  public PersonDTO addPerson(String fName, String lName, String phone, String street, String zip, String city);  
   public PersonDTO deletePerson(Integer id) throws PersonNotFoundException;
   public PersonDTO getPerson(Integer id) throws PersonNotFoundException; 
   public PersonsDTO getAllPersons();  

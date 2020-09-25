@@ -1,6 +1,7 @@
 package rest;
 
 import dtos.PersonDTO;
+import entities.Address;
 import entities.Person;
 import utils.EMF_Creator;
 import io.restassured.RestAssured;
@@ -24,6 +25,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 //Uncomment the line below, to temporarily disable this test
@@ -67,10 +69,18 @@ public class PersonResourceTest {
     
     @BeforeEach
     public void setUp() {
+        Address a1 = new Address("Kobbervej 14", "8405", "Vemdrup");
+        Address a2 = new Address("Tolstrupvej", "2100", "København");
+        Address a3 = new Address("Ryevej", "9000", "Rostrup");
+        
         EntityManager em = emf.createEntityManager(); 
+        
         p1 = new Person("Søren", "Hansen", "11111111");
+        p1.setAddress(a1);
         p2 = new Person("Franz", "Wilhelm Andersen", "22222222");
+        p2.setAddress(a2);
         p3 = new Person("Tove", "Ditlevsen", "33333333");
+        p3.setAddress(a3);
 
         try {
             em.getTransaction().begin();
@@ -84,14 +94,6 @@ public class PersonResourceTest {
         }
     }   
     
-    /*
-    @Test
-    public void testServerIsUp() {
-        given().when().get("/person").then().statusCode(200);
-    }
-    */
-    
-    /*
     @Test
     public void getAllPersons(){
             List<PersonDTO> personDTOList;
@@ -107,21 +109,23 @@ public class PersonResourceTest {
             PersonDTO personDTO2 = new PersonDTO(p2);
             PersonDTO personDTO3 = new PersonDTO(p3);
             
-            assertThat(personDTOList, contains(personDTO1, personDTO2, personDTO3));
+            assertThat(personDTOList, containsInAnyOrder(personDTO1, personDTO2, personDTO3));
     }
-    */
     
     @Test
     public void addPerson(){
         given()
                 .contentType(ContentType.JSON)
-                .body(new PersonDTO("Jonas", "Sthur", "33777744"))
+                .body(new PersonDTO("Jonas", "Sthur", "33777744", "Engelsborgvej", "2800", "Kgs. Lyngby"))
                 .when()
                 .post("person")
                 .then()
                 .body("fName", equalTo("Jonas"))
                 .body("lName", equalTo("Sthur"))
                 .body("phone", equalTo("33777744"))
+                .body("street", equalTo("Engelsborgvej"))
+                .body("zip", equalTo("2800"))
+                .body("city", equalTo("Kgs. Lyngby"))
                 .body("id", notNullValue());
     }
     
@@ -136,8 +140,6 @@ public class PersonResourceTest {
                 .when()
                 .put("person/"+ person.getId())
                 .then()
-                .body("fName", equalTo("Søren"))
-                .body("lName", equalTo("Hansen"))
                 .body("phone", equalTo("44444444"))
                 .body("id", equalTo((int)person.getId()));
     }
@@ -153,6 +155,5 @@ public class PersonResourceTest {
             .then()
             .assertThat()
             .statusCode(HttpStatus.OK_200.getStatusCode());
-           
     }
 }

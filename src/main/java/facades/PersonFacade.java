@@ -3,6 +3,7 @@ package facades;
 import exceptions.PersonNotFoundException;
 import dtos.PersonDTO;
 import dtos.PersonsDTO;
+import entities.Address;
 import entities.Person;
 import facades.IPersonFacade;
 import java.util.ArrayList;
@@ -49,10 +50,10 @@ public class PersonFacade implements IPersonFacade {
         EntityManager em = getEntityManager();
 
         try {
-            em.getTransaction().begin();
-
             Person person = em.find(Person.class, id);
+
             if (person != null) {
+                em.getTransaction().begin();
                 em.remove(person);
                 em.getTransaction().commit();
                 return new PersonDTO(person);
@@ -66,15 +67,21 @@ public class PersonFacade implements IPersonFacade {
     }
 
     @Override
-    public PersonDTO editPerson(PersonDTO p) {
+    public PersonDTO editPerson(PersonDTO p) throws PersonNotFoundException {
 
         EntityManager em = getEntityManager();
+        Person person = em.find(Person.class, p.getId());
+
+        //Checks if person exists
+        if (person == null) {
+            Integer id = p.getId();
+            throw new PersonNotFoundException(String.format("Person with id (%d) not found", id));
+        }
 
         try {
             em.getTransaction().begin();
 
-            Person person = em.find(Person.class, p.getId());
-
+            //Only sets values for the fields if any value was received:
             if (p.getfName() != null) {
                 person.setfName(p.getfName());
             }
@@ -85,6 +92,18 @@ public class PersonFacade implements IPersonFacade {
 
             if (p.getPhone() != null) {
                 person.setPhone(p.getPhone());
+            }
+
+            if (p.getStreet() != null) {
+                person.getAddress().setStreet(p.getStreet());
+            }
+
+            if (p.getZip() != null) {
+                person.getAddress().setZip(p.getZip());
+            }
+
+            if (p.getCity() != null) {
+                person.getAddress().setCity(p.getCity());
             }
 
             person.setLastEdited();
@@ -98,11 +117,27 @@ public class PersonFacade implements IPersonFacade {
     }
 
     @Override
-    public PersonDTO addPerson(String fName, String lName, String phone) {
+    public PersonDTO addPerson(String fName, String lName, String phone, String street, String zip, String city) {
         EntityManager em = getEntityManager();
         Person person = new Person(fName, lName, phone);
+
         try {
             em.getTransaction().begin();
+
+            //Checks in adress already exists in DB:
+            Query query = em.createQuery("SELECT a FROM Address a WHERE a.street = :street AND a.zip = :zip AND a.city = :city");
+            query.setParameter("street", street);
+            query.setParameter("zip", zip);
+            query.setParameter("city", city);
+            List<Address> addresses = query.getResultList();
+
+            //If address already exists then get it from DB and set it:
+            if (addresses.size() > 0) {
+                person.setAddress(addresses.get(0));
+                //If address does not exists then create it at set it:
+            } else {
+                person.setAddress(new Address(street, zip, city));
+            }
             em.persist(person);
             em.getTransaction().commit();
             return new PersonDTO(person);
@@ -136,7 +171,8 @@ public class PersonFacade implements IPersonFacade {
         }
 
     }
-
+    
+    /*
     public static void main(String[] args) {
 
         EntityManager em = emf.createEntityManager();
@@ -144,12 +180,14 @@ public class PersonFacade implements IPersonFacade {
         try {
             em.getTransaction().begin();
             em.createQuery("DELETE from Person").executeUpdate();
-            em.persist(new Person("Kurt", "Wonnegut", "12345678"));
-            em.persist(new Person("Peter", "Hansen", "12345678"));
+            em.persist(new Person("Søren", "Jensen", "11111111"));
+            em.persist(new Person("Peter", "Hansen", "22222222"));
+            em.persist(new Person("Tove", "Ditlevsen", "33333333"));
             em.getTransaction().commit();
         } finally {
             em.close();
         }
     }
-
+    */
+    
 }
